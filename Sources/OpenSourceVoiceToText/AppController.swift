@@ -15,6 +15,11 @@ final class AppController: ObservableObject {
         case pasted           // text inserted into the focused app
         case copiedOnly       // clipboard only (no Accessibility permission)
         case error(String)
+
+        var isError: Bool {
+            if case .error = self { return true }
+            return false
+        }
     }
 
     @Published private(set) var state: State = .downloadingModel
@@ -54,13 +59,13 @@ final class AppController: ObservableObject {
             if case .error = state { prepare() }
             return
         }
-        guard state == .idle else { return }
+        // Allow retrying from a (sticky) error state.
+        guard state == .idle || state.isError else { return }
         recordingTask?.cancel()
         recordingTask = Task {
             let granted = await Self.requestMicrophoneAccess()
             guard granted else {
-                state = .error("Microphone access denied")
-                scheduleReset()
+                state = .error("Microphone access denied — enable in System Settings > Privacy & Security")
                 return
             }
             do {
@@ -69,7 +74,6 @@ final class AppController: ObservableObject {
                 state = .recording
             } catch {
                 state = .error(error.localizedDescription)
-                scheduleReset()
             }
         }
     }
@@ -96,7 +100,6 @@ final class AppController: ObservableObject {
                 scheduleReset()
             } catch {
                 state = .error(error.localizedDescription)
-                scheduleReset()
             }
         }
     }

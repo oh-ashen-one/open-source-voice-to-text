@@ -4,7 +4,7 @@ import SwiftUI
 /// Non-activating, floating, transparent panel hosting the pill SwiftUI view.
 final class PillPanel: NSPanel {
 
-    static let pillSize = NSSize(width: 220, height: 56)
+    static let pillSize = NSSize(width: 164, height: 40)
 
     init(rootView: some View) {
         super.init(
@@ -47,12 +47,13 @@ struct PillView: View {
     var onQuit: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             statusIndicator
             statusLabel
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 18)
+        .font(.subheadline)
+        .padding(.horizontal, 14)
         .frame(width: PillPanel.pillSize.width, height: PillPanel.pillSize.height)
         .background(.ultraThinMaterial, in: Capsule())
         .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 1))
@@ -97,28 +98,10 @@ struct PillView: View {
         }
     }
 
-    @ViewBuilder
     private var statusLabel: some View {
-        switch controller.state {
-        case .downloadingModel:
-            Text("Downloading model…")
-                .foregroundStyle(.secondary)
-        case .idle:
-            Text("Hold \(settings.hotkey.displayName)")
-                .foregroundStyle(.secondary)
-        case .recording:
-            RecordingTimer(start: controller.recordingStart)
-        case .transcribing:
-            Text("Transcribing…")
-        case .pasted:
-            Text("Pasted")
-        case .copiedOnly:
-            Text("Copied to clipboard")
-        case .error(let message):
-            Text(message)
-                .lineLimit(2)
-                .font(.caption)
-        }
+        Text(settings.hotkey.displayName)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
     }
 }
 
@@ -134,19 +117,5 @@ private struct PulsingDot: View {
             .opacity(pulsing ? 0.6 : 1.0)
             .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: pulsing)
             .onAppear { pulsing = true }
-    }
-}
-
-/// Elapsed recording time, ticking every 0.1 s.
-private struct RecordingTimer: View {
-    let start: Date?
-
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.1)) { context in
-            let elapsed = max(0, context.date.timeIntervalSince(start ?? context.date))
-            Text(String(format: "%.1f s", elapsed))
-                .monospacedDigit()
-                .foregroundStyle(.red)
-        }
     }
 }
