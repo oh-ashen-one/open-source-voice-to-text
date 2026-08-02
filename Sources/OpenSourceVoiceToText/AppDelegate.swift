@@ -22,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onQuit: { NSApp.terminate(nil) }
         )
         let panel = PillPanel(rootView: pillView)
-        panel.positionAboveDock()
+        panel.positionBottomRight()
         panel.orderFrontRegardless()
         pillPanel = panel
 

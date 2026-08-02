@@ -29,12 +29,13 @@ final class PillPanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    /// Bottom-center of the main screen, just above the Dock area.
-    func positionAboveDock() {
+    /// Bottom-right corner of the screen, down in the empty wallpaper strip
+    /// beside the Dock (below the usable window area).
+    func positionBottomRight() {
         guard let screen = NSScreen.main else { return }
-        let visible = screen.visibleFrame
-        let x = visible.midX - PillPanel.pillSize.width / 2
-        let y = visible.minY + 12
+        let frame = screen.frame
+        let x = frame.maxX - PillPanel.pillSize.width - 12
+        let y = frame.minY + 8
         setFrameOrigin(NSPoint(x: x, y: y))
     }
 }
