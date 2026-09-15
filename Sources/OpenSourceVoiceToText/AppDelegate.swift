@@ -31,6 +31,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeyManager.onRelease = { [weak self] in self?.controller.endRecording() }
         hotkeyManager.start()
 
+        // Without Input Monitoring permission the hotkey monitors receive
+        // no events at all — prompt for it up front (once).
+        if !InputMonitoring.isGranted {
+            InputMonitoring.request()
+        }
+
         // Kick off microphone permission + model download in the background.
         controller.prepare()
     }

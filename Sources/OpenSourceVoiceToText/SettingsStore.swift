@@ -37,6 +37,7 @@ enum Hotkey: String, CaseIterable, Identifiable {
     case rightShift
     case rightControl
     case fnGlobe
+    case backtick
     case f5, f6, f7, f8, f9, f10, f11, f12
 
     var id: String { rawValue }
@@ -49,6 +50,7 @@ enum Hotkey: String, CaseIterable, Identifiable {
         case .rightShift: return "Right Shift ⇧"
         case .rightControl: return "Right Control ⌃"
         case .fnGlobe: return "Fn / Globe 🌐"
+        case .backtick: return "Backtick `"
         case .f5: return "F5"
         case .f6: return "F6"
         case .f7: return "F7"
@@ -63,7 +65,7 @@ enum Hotkey: String, CaseIterable, Identifiable {
     /// true if this hotkey is a modifier detected via .flagsChanged
     var isModifier: Bool {
         switch self {
-        case .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12: return false
+        case .backtick, .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12: return false
         default: return true
         }
     }
@@ -77,6 +79,7 @@ enum Hotkey: String, CaseIterable, Identifiable {
         case .rightShift: return 0x3C
         case .rightControl: return 0x3E
         case .fnGlobe: return 0x3F
+        case .backtick: return 50 // ` / ~ key (ANSI)
         case .f5: return 96
         case .f6: return 97
         case .f7: return 98

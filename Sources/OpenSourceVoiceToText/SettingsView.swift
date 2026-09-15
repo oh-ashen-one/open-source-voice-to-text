@@ -54,6 +54,16 @@ struct SettingsView: View {
                     AVCaptureDevice.requestAccess(for: .audio) { _ in }
                 }
                 permissionRow(
+                    title: "Input Monitoring (hotkey)",
+                    granted: InputMonitoring.isGranted,
+                    actionTitle: "Request…"
+                ) {
+                    InputMonitoring.request()
+                }
+                Text("Input Monitoring lets the app see your hotkey presses in other apps. If you just granted it, quit and relaunch the app for it to take effect.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                permissionRow(
                     title: "Accessibility (auto-paste)",
                     granted: AXIsProcessTrusted(),
                     actionTitle: "Open Settings…"

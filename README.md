@@ -42,7 +42,7 @@ Then:
 - **Fully local** — audio never leaves your Mac; works offline after the one-time model download
 - **Clipboard-safe** — pastes your dictation, then restores whatever you had copied before
 - **No hallucinated text** — silence and background noise are detected and discarded instead of producing phantom "Thanks for watching!" output
-- **Configurable hotkey** — Right Option (default), Left Option, Right Command, Right Shift, Right Control, Fn/Globe, or F5–F12
+- **Configurable hotkey** — Right Option (default), Left Option, Right Command, Right Shift, Right Control, Fn/Globe, Backtick, or F5–F12
 - **Launch at login** — one toggle in Settings
 - **3-minute recording cap** — an accidentally held key stops itself
 - **Paste anywhere** — text is pasted at the cursor in the focused app; without Accessibility permission it falls back to clipboard-only
@@ -59,10 +59,11 @@ Then:
 
 On first use macOS will ask for:
 
+- **Input Monitoring** — required for the app to see your hotkey presses while other apps are focused. On recent macOS versions, without this the hotkey silently does nothing. The app asks at first launch; if nothing seems to happen when you hold the key, check **System Settings → Privacy & Security → Input Monitoring**, toggle **Open Source Voice to Text** on, then quit and relaunch the app (grants only take effect on the next launch).
 - **Microphone** — required to record your voice.
 - **Accessibility** — required for auto-paste (synthesizing ⌘V into other apps). It is asked for **once**. If you decline, the app still works: transcribed text is copied to the clipboard and the pill shows an orange clipboard icon — paste manually with ⌘V.
 
-Manage these any time under **System Settings → Privacy & Security → Microphone / Accessibility**, or from the pill's settings window (click the pill).
+Manage these any time under **System Settings → Privacy & Security → Input Monitoring / Microphone / Accessibility**, or from the pill's settings window (click the pill).
 
 ### A note on code signing and permissions
 
@@ -80,7 +81,7 @@ The first time the app runs, it fetches the Whisper Large v3 Turbo CoreML model 
 
 Click the pill (or right-click it → **Settings…**):
 
-- **Hotkey** — Right/Left Option, Right Command, Right Shift, Right Control, Fn/Globe, or F5–F12. Persisted across launches.
+- **Hotkey** — Right/Left Option, Right Command, Right Shift, Right Control, Fn/Globe, Backtick, or F5–F12. Persisted across launches.
 - **Model** — Large v3 Turbo (recommended), Small, or Base. Switching downloads the new model once and uses it from then on.
 - **Launch at login** — registers/unregisters the app as a login item.
 - **Permissions** — live status + request buttons for Microphone and Accessibility.
@@ -99,6 +100,7 @@ This project is MIT-licensed — fork it, change it, make it yours. The codebase
 | `Sources/OpenSourceVoiceToText/AppDelegate.swift` | Wires pill + hotkey + controller together |
 | `Sources/OpenSourceVoiceToText/PillPanel.swift` | Floating pill window (position, size, SwiftUI view) |
 | `Sources/OpenSourceVoiceToText/HotkeyManager.swift` | Global push-to-talk key monitoring |
+| `Sources/OpenSourceVoiceToText/InputMonitoring.swift` | Input Monitoring permission check + request |
 | `Sources/OpenSourceVoiceToText/SettingsStore.swift` | Hotkey, model and launch-at-login choices (`UserDefaults`) |
 | `Sources/OpenSourceVoiceToText/AudioRecorder.swift` | `AVAudioEngine` capture → 16 kHz mono samples |
 | `Sources/OpenSourceVoiceToText/Transcriber.swift` | WhisperKit wrapper (model download, silence gate, hallucination filter) |
