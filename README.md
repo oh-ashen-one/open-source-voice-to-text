@@ -38,7 +38,7 @@ Then:
 
 - **Hold-to-talk** — press and hold a hotkey to record, release to transcribe and insert
 - **Paid-app accuracy** — Whisper Large v3 Turbo (~630 MB, CoreML/ANE-accelerated) is the default; Small (~215 MB) and Base (~150 MB) available in Settings for slower Macs
-- **Floating pill UI** — a small capsule in the bottom-right corner. The icon tells you everything: waveform (idle) · pulsing red dot (recording) · spinner (transcribing/downloading) · green check (pasted) · orange clipboard (copied only) · red triangle (error)
+- **Minimal floating indicator** — a tiny circle in the bottom-right corner, out of your way. The icon tells you everything: waveform (idle) · pulsing red dot (recording) · spinner (transcribing/downloading) · green check (pasted) · orange clipboard (copied only) · red triangle (error)
 - **Fully local** — audio never leaves your Mac; works offline after the one-time model download
 - **Clipboard-safe** — pastes your dictation, then restores whatever you had copied before
 - **No hallucinated text** — silence and background noise are detected and discarded instead of producing phantom "Thanks for watching!" output
@@ -48,7 +48,7 @@ Then:
 - **Menu bar icon** — top-right status icon mirrors the app's state (idle / recording / transcribing / pasted / error) with Settings and Quit always one click away
 - **Optional Dock icon** — on by default; hide it in Settings for a cleaner Dock
 - **3-minute recording cap** — an accidentally held key stops itself
-- **Paste anywhere** — text is pasted at the cursor in the focused app; without Accessibility permission it falls back to clipboard-only
+- **Paste anywhere** — text is pasted at the cursor in the focused app; if the focus isn't a text field (or Accessibility is denied), the transcription stays on your clipboard instead, ready to ⌘V yourself
 
 ## Requirements
 

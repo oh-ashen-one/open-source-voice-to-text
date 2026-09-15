@@ -4,7 +4,7 @@ import SwiftUI
 /// Non-activating, floating, transparent panel hosting the pill SwiftUI view.
 final class PillPanel: NSPanel {
 
-    static let pillSize = NSSize(width: 164, height: 40)
+    static let pillSize = NSSize(width: 32, height: 32)
 
     init(rootView: some View) {
         super.init(
@@ -40,7 +40,8 @@ final class PillPanel: NSPanel {
     }
 }
 
-/// The pill UI: shows idle / downloading / recording / transcribing state.
+/// The pill UI: a minimal floating indicator — logo mark when idle,
+/// pulsing red dot while recording, spinner while busy.
 struct PillView: View {
     @ObservedObject var controller: AppController
     @ObservedObject var settings: SettingsStore
@@ -48,29 +49,24 @@ struct PillView: View {
     var onQuit: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            statusIndicator
-            statusLabel
-            Spacer(minLength: 0)
-        }
-        .font(.subheadline)
-        .padding(.horizontal, 14)
-        .frame(width: PillPanel.pillSize.width, height: PillPanel.pillSize.height)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 1))
-        .contentShape(Capsule())
-        .onTapGesture {
-            if case .error = controller.state, !controller.modelReady {
-                controller.prepare() // retry model download
-            } else {
-                onOpenSettings()
+        statusIndicator
+            .font(.system(size: 13))
+            .frame(width: PillPanel.pillSize.width, height: PillPanel.pillSize.height)
+            .background(.ultraThinMaterial, in: Circle())
+            .overlay(Circle().strokeBorder(.white.opacity(0.15), lineWidth: 1))
+            .contentShape(Circle())
+            .onTapGesture {
+                if case .error = controller.state, !controller.modelReady {
+                    controller.prepare() // retry model download
+                } else {
+                    onOpenSettings()
+                }
             }
-        }
-        .contextMenu {
-            Button("Settings…", action: onOpenSettings)
-            Divider()
-            Button("Quit Voice to Text", action: onQuit)
-        }
+            .contextMenu {
+                Button("Settings…", action: onOpenSettings)
+                Divider()
+                Button("Quit Voice to Text", action: onQuit)
+            }
     }
 
     @ViewBuilder
@@ -97,18 +93,6 @@ struct PillView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.red)
         }
-    }
-
-    private var statusLabel: some View {
-        Group {
-            if case .downloadingModel = controller.state {
-                Text("Downloading model…")
-            } else {
-                Text(settings.hotkey.displayName)
-            }
-        }
-        .foregroundStyle(.secondary)
-        .lineLimit(1)
     }
 }
 

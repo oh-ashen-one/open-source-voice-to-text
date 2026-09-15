@@ -10,11 +10,30 @@ enum TextInserter {
     private static let didPromptKey = "didPromptForAccessibility"
 
     /// - Returns: true if the paste keystroke was synthesized, false if the
-    ///   text was only copied to the clipboard (no Accessibility permission).
+    ///   text was only copied to the clipboard (no Accessibility permission,
+    ///   or the focus is not in an editable text field).
     @MainActor
     @discardableResult
     static func insert(_ text: String) -> Bool {
         let pasteboard = NSPasteboard.general
+
+        guard AXIsProcessTrusted() else {
+            promptForAccessibilityOnce()
+            pasteboard.clearContents()
+            pasteboard.setString(text, forType: .string)
+            return false
+        }
+
+        // Focus is not a text field (desktop, Finder, a button…): a
+        // synthesized ⌘V would go nowhere and the clipboard restore would
+        // then lose the transcription. Instead leave it on the clipboard
+        // so the user can paste it manually.
+        guard focusIsEditable() else {
+            pasteboard.clearContents()
+            pasteboard.setString(text, forType: .string)
+            Log.info("insert: focus is not a text field — copied to clipboard")
+            return false
+        }
 
         // Snapshot the clipboard so we can restore it after pasting —
         // dictation should not clobber whatever the user had copied.
@@ -23,11 +42,6 @@ enum TextInserter {
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
         let changeCountAfterWrite = pasteboard.changeCount
-
-        guard AXIsProcessTrusted() else {
-            promptForAccessibilityOnce()
-            return false
-        }
 
         // Give the pasteboard write a beat to become visible to other
         // processes before the synthesized ⌘V arrives.
@@ -43,6 +57,33 @@ enum TextInserter {
             restore(saved, into: pasteboard)
         }
         return true
+    }
+
+    /// Whether the currently focused UI element accepts text input.
+    /// Requires Accessibility permission; callers check trust first.
+    private static func focusIsEditable() -> Bool {
+        let systemWide = AXUIElementCreateSystemWide()
+        var focused: AnyObject?
+        guard AXUIElementCopyAttributeValue(
+            systemWide,
+            kAXFocusedUIElementAttribute as CFString,
+            &focused
+        ) == .success, let focused else { return false }
+        let element = focused as! AXUIElement
+
+        // Web views and Electron apps mark editable elements directly.
+        var editable: AnyObject?
+        if AXUIElementCopyAttributeValue(element, "AXEditable" as CFString, &editable) == .success,
+           (editable as? Bool) == true {
+            return true
+        }
+
+        var roleValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleValue) == .success,
+              let role = roleValue as? String else { return false }
+        // Secure text fields reject ⌘V anyway — treat them as copy-only.
+        let textRoles: Set<String> = ["AXTextArea", "AXTextField", "AXComboBox"]
+        return textRoles.contains(role)
     }
 
     private static func postCommandV() {
