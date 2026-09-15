@@ -32,8 +32,27 @@ enum RecordingSaver {
             }
             try file.write(from: buffer)
             Log.info("saver: wrote \(url.lastPathComponent) (\(samples.count) samples)")
+            prune(keep: 3)
         } catch {
             Log.info("saver: failed to write \(url.path): \(error.localizedDescription)")
+        }
+    }
+
+    /// Keeps only the newest `keep` recordings in ~/Downloads. File names
+    /// are timestamped, so sorting by name sorts oldest-first.
+    private static func prune(keep: Int) {
+        let downloads = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Downloads")
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: downloads,
+            includingPropertiesForKeys: nil
+        ) else { return }
+        let recordings = files
+            .filter { $0.lastPathComponent.hasPrefix("VoiceToText-") && $0.pathExtension == "wav" }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        for stale in recordings.dropLast(keep) {
+            try? FileManager.default.removeItem(at: stale)
+            Log.info("saver: pruned \(stale.lastPathComponent)")
         }
     }
 

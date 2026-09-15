@@ -177,5 +177,13 @@ final class SettingsStore: ObservableObject {
         soundCues = defaults.object(forKey: Self.soundCuesKey) == nil
             ? true
             : defaults.bool(forKey: Self.soundCuesKey)
+
+        // First run ever: default to launching at login, like the paid
+        // apps — the whole point is muscle memory.
+        if defaults.object(forKey: launchAtLoginKey) == nil {
+            try? SMAppService.mainApp.register()
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+            defaults.set(launchAtLogin, forKey: launchAtLoginKey)
+        }
     }
 }
