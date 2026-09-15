@@ -100,9 +100,15 @@ struct PillView: View {
     }
 
     private var statusLabel: some View {
-        Text(settings.hotkey.displayName)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
+        Group {
+            if case .downloadingModel = controller.state {
+                Text("Downloading model…")
+            } else {
+                Text(settings.hotkey.displayName)
+            }
+        }
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
     }
 }
 

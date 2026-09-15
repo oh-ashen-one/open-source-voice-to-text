@@ -18,10 +18,12 @@ cp "Resources/Info.plist" "${APP_DIR}/Contents/Info.plist"
 # Sign with a stable identity so macOS TCC permissions (Microphone,
 # Accessibility) survive rebuilds. Ad-hoc signatures change hash on every
 # build, which makes macOS re-prompt for permissions each time.
-IDENTITY="$(security find-identity -v -p codesigning | sed -n 's/.*"\(Apple Development:.*\)"/\1/p' | head -1)"
-if [ -n "${IDENTITY}" ]; then
-    echo "==> Code signing with: ${IDENTITY}"
-    codesign --force --deep --sign "${IDENTITY}" "${APP_DIR}"
+# Use the certificate SHA-1 (unique) rather than the name, which can be
+# ambiguous when multiple Apple Development certs exist in the keychain.
+IDENTITY_HASH="$(security find-identity -v -p codesigning | grep 'Apple Development:' | head -1 | awk '{print $2}')"
+if [ -n "${IDENTITY_HASH}" ]; then
+    echo "==> Code signing with Apple Development identity ${IDENTITY_HASH}"
+    codesign --force --deep --sign "${IDENTITY_HASH}" "${APP_DIR}"
 else
     echo "==> WARNING: no Apple Development identity found; falling back to ad-hoc signing."
     echo "    Permissions will be re-requested on every rebuild."

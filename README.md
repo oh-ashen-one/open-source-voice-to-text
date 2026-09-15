@@ -1,19 +1,24 @@
 # Open Source Voice to Text
 
-An open-source [Wispr Flow](https://wisprflow.ai) alternative for macOS: **hold a key, speak, release — your words are typed wherever your cursor is.** Transcription runs 100% on-device with [WhisperKit](https://github.com/argmaxinc/WhisperKit) (Apple's CoreML-optimized Whisper port). No cloud, no account, no subscription.
+**Wispr Flow, free and open source.** Hold a key, speak, release — your words are typed wherever your cursor is. Transcription runs **100% on-device** with [WhisperKit](https://github.com/argmaxinc/WhisperKit) (Apple's CoreML-optimized Whisper). No cloud, no account, no subscription.
 
-<!-- TODO: add a screenshot or screen recording of the pill in action (docs/screenshot.png) -->
+- macOS 14+ · Apple Silicon recommended · MIT licensed
+- Large v3 Turbo model by default — the same accuracy class as paid dictation apps
+- ~900 lines of Swift, no Xcode project, one build script
 
-## Features
+---
 
-- **Hold-to-talk** — press and hold a hotkey to record, release to transcribe and insert
-- **Floating pill UI** — a small capsule in the bottom-right corner of the screen, down in the empty wallpaper strip beside the Dock. The icon tells you everything: waveform (idle) · pulsing red dot (recording) · spinner (transcribing) · green check (pasted) · red triangle (error)
-- **Fully local transcription** — Whisper `base` model via CoreML, fast on Apple Silicon; audio never leaves your Mac
-- **Configurable hotkey** — Right Option (default), Left Option, Right Command, Right Shift, Right Control, Fn/Globe, or F5–F12
-- **Paste anywhere** — text is pasted at the cursor in the focused app (copies to clipboard + synthesizes ⌘V)
-- **Menu-bar-less background app** — no Dock icon (`LSUIElement`), just the pill
+## Give this repo to your AI agent
 
-## Quick start
+Paste this into Claude Code, Cursor, Kimi Code, Codex, or any coding agent:
+
+```
+Clone https://github.com/oh-ashen-one/open-source-voice-to-text,
+run `bash build.sh`, then launch `build/OpenSourceVoiceToText.app`.
+Tell me when the pill appears in the bottom-right corner of my screen.
+```
+
+Or do it yourself:
 
 ```bash
 git clone https://github.com/oh-ashen-one/open-source-voice-to-text.git
@@ -22,28 +27,42 @@ bash build.sh
 open build/OpenSourceVoiceToText.app
 ```
 
-That's it. Then:
+Then:
 
 1. Put your cursor in any text field, in any app.
 2. **Hold the Right Option (⌥) key** — the pill shows a pulsing red dot.
 3. Speak.
 4. **Release the key** — a spinner appears, then the text lands at your cursor.
 
+## Features
+
+- **Hold-to-talk** — press and hold a hotkey to record, release to transcribe and insert
+- **Paid-app accuracy** — Whisper Large v3 Turbo (~630 MB, CoreML/ANE-accelerated) is the default; Small (~215 MB) and Base (~150 MB) available in Settings for slower Macs
+- **Floating pill UI** — a small capsule in the bottom-right corner. The icon tells you everything: waveform (idle) · pulsing red dot (recording) · spinner (transcribing/downloading) · green check (pasted) · orange clipboard (copied only) · red triangle (error)
+- **Fully local** — audio never leaves your Mac; works offline after the one-time model download
+- **Clipboard-safe** — pastes your dictation, then restores whatever you had copied before
+- **No hallucinated text** — silence and background noise are detected and discarded instead of producing phantom "Thanks for watching!" output
+- **Configurable hotkey** — Right Option (default), Left Option, Right Command, Right Shift, Right Control, Fn/Globe, or F5–F12
+- **Launch at login** — one toggle in Settings
+- **3-minute recording cap** — an accidentally held key stops itself
+- **Paste anywhere** — text is pasted at the cursor in the focused app; without Accessibility permission it falls back to clipboard-only
+- **Background app** — no Dock icon, no menu bar clutter, just the pill
+
 ## Requirements
 
 - macOS 14 (Sonoma) or later
 - Apple Silicon recommended (WhisperKit uses CoreML/ANE; Intel works but is slower)
-- Xcode / Swift toolchain to build from source
-- ~150 MB disk + internet **once**, to download the Whisper model on first launch
+- Xcode / Swift toolchain to build from source (`xcode-select --install` is enough for the toolchain)
+- ~650 MB disk + internet **once**, to download the default model on first launch
 
 ## Permissions
 
 On first use macOS will ask for:
 
 - **Microphone** — required to record your voice.
-- **Accessibility** — required for auto-paste (synthesizing ⌘V into other apps). If you decline, the app still works: transcribed text is copied to the clipboard and the pill shows an orange clipboard icon — paste manually with ⌘V.
+- **Accessibility** — required for auto-paste (synthesizing ⌘V into other apps). It is asked for **once**. If you decline, the app still works: transcribed text is copied to the clipboard and the pill shows an orange clipboard icon — paste manually with ⌘V.
 
-Manage these any time under **System Settings → Privacy & Security → Microphone / Accessibility**, or from the pill's settings window.
+Manage these any time under **System Settings → Privacy & Security → Microphone / Accessibility**, or from the pill's settings window (click the pill).
 
 ### A note on code signing and permissions
 
@@ -55,11 +74,18 @@ tccutil reset All com.opensource.voicetext
 
 ## First launch
 
-The first time the app runs, it fetches the `openai_whisper-base` CoreML model (~150 MB) from Hugging Face (`argmaxinc/whisperkit-coreml`) — the pill shows a spinner while this happens. It's a one-time download; afterwards everything, including transcription, works fully offline.
+The first time the app runs, it fetches the Whisper Large v3 Turbo CoreML model (~630 MB) from Hugging Face (`argmaxinc/whisperkit-coreml`) — the pill shows "Downloading model…" while this happens. It's a one-time download; afterwards everything, including transcription, works fully offline.
 
-## Changing the hotkey
+## Settings
 
-Click the pill (or right-click it → **Settings…**) and pick a different key: Right/Left Option, Right Command, Right Shift, Right Control, Fn/Globe, or F5–F12. Your choice is persisted across launches. Right-click the pill → **Quit Voice to Text** to exit.
+Click the pill (or right-click it → **Settings…**):
+
+- **Hotkey** — Right/Left Option, Right Command, Right Shift, Right Control, Fn/Globe, or F5–F12. Persisted across launches.
+- **Model** — Large v3 Turbo (recommended), Small, or Base. Switching downloads the new model once and uses it from then on.
+- **Launch at login** — registers/unregisters the app as a login item.
+- **Permissions** — live status + request buttons for Microphone and Accessibility.
+
+Right-click the pill → **Quit Voice to Text** to exit.
 
 ## Editing / contributing
 
@@ -73,11 +99,11 @@ This project is MIT-licensed — fork it, change it, make it yours. The codebase
 | `Sources/OpenSourceVoiceToText/AppDelegate.swift` | Wires pill + hotkey + controller together |
 | `Sources/OpenSourceVoiceToText/PillPanel.swift` | Floating pill window (position, size, SwiftUI view) |
 | `Sources/OpenSourceVoiceToText/HotkeyManager.swift` | Global push-to-talk key monitoring |
-| `Sources/OpenSourceVoiceToText/SettingsStore.swift` | Hotkey choices, persisted in `UserDefaults` |
+| `Sources/OpenSourceVoiceToText/SettingsStore.swift` | Hotkey, model and launch-at-login choices (`UserDefaults`) |
 | `Sources/OpenSourceVoiceToText/AudioRecorder.swift` | `AVAudioEngine` capture → 16 kHz mono samples |
-| `Sources/OpenSourceVoiceToText/Transcriber.swift` | WhisperKit wrapper (model download + transcription) |
+| `Sources/OpenSourceVoiceToText/Transcriber.swift` | WhisperKit wrapper (model download, silence gate, hallucination filter) |
 | `Sources/OpenSourceVoiceToText/AppController.swift` | State machine: idle → recording → transcribing → pasted |
-| `Sources/OpenSourceVoiceToText/TextInserter.swift` | Clipboard + synthesized ⌘V |
+| `Sources/OpenSourceVoiceToText/TextInserter.swift` | Clipboard snapshot → paste → restore |
 | `Sources/OpenSourceVoiceToText/SettingsView.swift` | Settings window UI |
 | `build.sh` | Build release → assemble `.app` → code-sign |
 
@@ -87,8 +113,8 @@ This project is MIT-licensed — fork it, change it, make it yours. The codebase
 
 - **Hotkey**: global `NSEvent` monitors — `.flagsChanged` for modifier keys, `.keyDown`/`.keyUp` for F-keys (no Accessibility permission needed for monitoring)
 - **Audio**: `AVAudioEngine` tap, resampled on the fly to 16 kHz mono `Float32`
-- **Transcription**: WhisperKit, greedy decoding without timestamps for lowest latency
-- **Insertion**: `NSPasteboard` + `CGEvent` ⌘V synthesis
+- **Transcription**: WhisperKit, greedy decoding without timestamps for lowest latency; RMS-based silence gate + hallucination blocklist on quiet input
+- **Insertion**: snapshot clipboard → set text → `CGEvent` ⌘V synthesis → restore clipboard (skipped if the clipboard changed in the meantime)
 - **UI**: SwiftUI pill hosted in a non-activating, floating `NSPanel`
 
 ## License

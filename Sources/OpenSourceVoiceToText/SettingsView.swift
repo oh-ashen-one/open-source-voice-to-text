@@ -2,7 +2,8 @@ import SwiftUI
 import AVFoundation
 import ApplicationServices
 
-/// Settings window: pick the push-to-talk hotkey, see permission status.
+/// Settings window: pick the push-to-talk hotkey, model, and see
+/// permission status.
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
     @ObservedObject var controller: AppController
@@ -18,6 +19,30 @@ struct SettingsView: View {
                 Text("Hold the key, speak, release — the text is pasted at the cursor.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            Section("Transcription Model") {
+                Picker("Model", selection: $settings.model) {
+                    ForEach(WhisperModel.allCases) { model in
+                        Text(model.displayName).tag(model)
+                    }
+                }
+                HStack {
+                    Text(settings.model.sizeLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(controller.modelReady ? "Ready" : "Downloading…")
+                        .font(.caption)
+                        .foregroundStyle(controller.modelReady ? .green : .secondary)
+                }
+                Text("Runs 100% on-device. Downloaded from Hugging Face once, then works fully offline. Switching models re-downloads.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("General") {
+                Toggle("Launch at login", isOn: $settings.launchAtLogin)
             }
 
             Section("Permissions") {
@@ -39,22 +64,10 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            Section("Model") {
-                HStack {
-                    Text("Whisper base (on-device)")
-                    Spacer()
-                    Text(controller.modelReady ? "Ready" : "Downloading…")
-                        .foregroundStyle(controller.modelReady ? .green : .secondary)
-                }
-                Text("The model is downloaded from Hugging Face on first launch and runs fully offline afterwards.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .formStyle(.grouped)
         .padding()
-        .frame(width: 420)
+        .frame(width: 440)
     }
 
     private func permissionRow(

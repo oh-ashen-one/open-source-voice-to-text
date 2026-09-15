@@ -7,8 +7,8 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pillPanel: PillPanel?
     private var settingsWindow: NSWindow?
-    private let controller = AppController()
     private let settings = SettingsStore()
+    private lazy var controller = AppController(settings: settings)
     private lazy var hotkeyManager = HotkeyManager(settings: settings)
 
     func applicationDidFinishLaunching(_ notification: Notification) {

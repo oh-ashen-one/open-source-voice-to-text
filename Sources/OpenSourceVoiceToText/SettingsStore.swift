@@ -1,6 +1,33 @@
 import Foundation
 import AppKit
 import Combine
+import ServiceManagement
+
+/// On-device Whisper models available for transcription. The raw value is the
+/// folder name in the argmaxinc/whisperkit-coreml Hugging Face repo.
+enum WhisperModel: String, CaseIterable, Identifiable {
+    case largeV3Turbo = "openai_whisper-large-v3-v20240930_turbo_632MB"
+    case small = "openai_whisper-small_216MB"
+    case base = "openai_whisper-base"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .largeV3Turbo: return "Large v3 Turbo (recommended)"
+        case .small: return "Small"
+        case .base: return "Base"
+        }
+    }
+
+    var sizeLabel: String {
+        switch self {
+        case .largeV3Turbo: return "~630 MB, best accuracy"
+        case .small: return "~215 MB, good accuracy"
+        case .base: return "~150 MB, fastest"
+        }
+    }
+}
 
 /// Available push-to-talk hotkeys. Raw values are persisted in UserDefaults.
 enum Hotkey: String, CaseIterable, Identifiable {
@@ -78,9 +105,30 @@ enum Hotkey: String, CaseIterable, Identifiable {
 final class SettingsStore: ObservableObject {
     private let defaults = UserDefaults.standard
     private let hotkeyKey = "pushToTalkHotkey"
+    private let modelKey = "whisperModel"
+    private let launchAtLoginKey = "launchAtLogin"
 
     @Published var hotkey: Hotkey {
         didSet { defaults.set(hotkey.rawValue, forKey: hotkeyKey) }
+    }
+
+    @Published var model: WhisperModel {
+        didSet { defaults.set(model.rawValue, forKey: modelKey) }
+    }
+
+    @Published var launchAtLogin: Bool {
+        didSet {
+            defaults.set(launchAtLogin, forKey: launchAtLoginKey)
+            do {
+                if launchAtLogin {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                launchAtLogin = SMAppService.mainApp.status == .enabled
+            }
+        }
     }
 
     init() {
@@ -90,5 +138,13 @@ final class SettingsStore: ObservableObject {
         } else {
             hotkey = .rightOption
         }
+        if let raw = defaults.string(forKey: modelKey),
+           let saved = WhisperModel(rawValue: raw) {
+            model = saved
+        } else {
+            model = .largeV3Turbo
+        }
+        launchAtLogin = defaults.bool(forKey: launchAtLoginKey)
+            && SMAppService.mainApp.status == .enabled
     }
 }

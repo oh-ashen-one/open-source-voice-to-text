@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 /// Listens for the configured push-to-talk hotkey globally.
 /// Modifier keys are observed via .flagsChanged (no special permission
@@ -9,25 +10,20 @@ final class HotkeyManager {
 
     private let settings: SettingsStore
     private var monitors: [Any] = []
-    private var settingsObserver: Any?
+    private var hotkeyCancellable: AnyCancellable?
     private var isPressed = false
 
     init(settings: SettingsStore) {
         self.settings = settings
-        // Re-arm monitors if the user changes the hotkey while running.
-        settingsObserver = NotificationCenter.default.addObserver(
-            forName: UserDefaults.didChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.restart()
-        }
+        // Re-arm monitors only when the hotkey itself changes.
+        hotkeyCancellable = settings.$hotkey
+            .dropFirst()
+            .removeDuplicates()
+            .sink { [weak self] _ in self?.restart() }
     }
 
     deinit {
-        if let settingsObserver {
-            NotificationCenter.default.removeObserver(settingsObserver)
-        }
+        hotkeyCancellable?.cancel()
         stop()
     }
 

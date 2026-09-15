@@ -22,16 +22,39 @@ final class AppController: ObservableObject {
         }
     }
 
+    /// Maximum recording length before auto-stop (seconds). Prevents an
+    /// accidentally held key from buffering audio indefinitely.
+    static let recordingLimit: TimeInterval = 180
+
     @Published private(set) var state: State = .downloadingModel
     @Published private(set) var recordingStart: Date?
 
     /// True once the model has been loaded (at least attempted successfully).
     @Published private(set) var modelReady = false
 
+    let settings: SettingsStore
+
     private let recorder = AudioRecorder()
     private let transcriber = Transcriber()
     private var recordingTask: Task<Void, Never>?
     private var resetTask: Task<Void, Never>?
+    private var limitTask: Task<Void, Never>?
+    private var modelCancellable: AnyCancellable?
+
+    init(settings: SettingsStore) {
+        self.settings = settings
+        // Switching models in settings unloads the current one and downloads
+        // the new selection.
+        modelCancellable = settings.$model
+            .dropFirst()
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                guard let self else { return }
+                modelReady = false
+                Task { await self.transcriber.reset() }
+                prepare()
+            }
+    }
 
     // MARK: - Model preparation
 
@@ -40,9 +63,10 @@ final class AppController: ObservableObject {
     func prepare() {
         guard !modelReady else { return }
         state = .downloadingModel
+        let model = settings.model.rawValue
         Task {
             do {
-                try await transcriber.prepare()
+                try await transcriber.prepare(model: model)
                 modelReady = true
                 state = .idle
             } catch {
@@ -72,6 +96,7 @@ final class AppController: ObservableObject {
                 try recorder.start()
                 recordingStart = Date()
                 state = .recording
+                scheduleRecordingLimit()
             } catch {
                 state = .error(error.localizedDescription)
             }
@@ -81,6 +106,7 @@ final class AppController: ObservableObject {
     /// Hotkey released: stop recording, transcribe, insert text.
     func endRecording() {
         guard state == .recording else { return }
+        limitTask?.cancel()
         let samples = recorder.stop()
         recordingStart = nil
         guard !samples.isEmpty else {
@@ -88,9 +114,10 @@ final class AppController: ObservableObject {
             return
         }
         state = .transcribing
+        let model = settings.model.rawValue
         Task {
             do {
-                let text = try await transcriber.transcribe(samples: samples)
+                let text = try await transcriber.transcribe(samples: samples, model: model)
                 if text.isEmpty {
                     state = .idle
                     return
@@ -105,6 +132,16 @@ final class AppController: ObservableObject {
     }
 
     // MARK: - Helpers
+
+    /// Auto-stops the recording after `recordingLimit` seconds.
+    private func scheduleRecordingLimit() {
+        limitTask?.cancel()
+        limitTask = Task {
+            try? await Task.sleep(nanoseconds: UInt64(Self.recordingLimit * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            endRecording()
+        }
+    }
 
     private func scheduleReset(after seconds: TimeInterval = 2.5) {
         resetTask?.cancel()
