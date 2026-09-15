@@ -110,6 +110,7 @@ final class SettingsStore: ObservableObject {
     private let hotkeyKey = "pushToTalkHotkey"
     private let modelKey = "whisperModel"
     private let launchAtLoginKey = "launchAtLogin"
+    private let showInDockKey = "showInDock"
 
     @Published var hotkey: Hotkey {
         didSet { defaults.set(hotkey.rawValue, forKey: hotkeyKey) }
@@ -134,6 +135,18 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    /// Whether the app appears in the Dock. Applied live via activation policy.
+    @Published var showInDock: Bool {
+        didSet {
+            defaults.set(showInDock, forKey: showInDockKey)
+            Self.applyDockPolicy(showInDock)
+        }
+    }
+
+    static func applyDockPolicy(_ show: Bool) {
+        NSApp.setActivationPolicy(show ? .regular : .accessory)
+    }
+
     init() {
         if let raw = defaults.string(forKey: hotkeyKey),
            let saved = Hotkey(rawValue: raw) {
@@ -149,5 +162,10 @@ final class SettingsStore: ObservableObject {
         }
         launchAtLogin = defaults.bool(forKey: launchAtLoginKey)
             && SMAppService.mainApp.status == .enabled
+        if defaults.object(forKey: showInDockKey) == nil {
+            showInDock = true
+        } else {
+            showInDock = defaults.bool(forKey: showInDockKey)
+        }
     }
 }

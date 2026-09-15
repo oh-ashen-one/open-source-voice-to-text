@@ -44,9 +44,10 @@ Then:
 - **No hallucinated text** — silence and background noise are detected and discarded instead of producing phantom "Thanks for watching!" output
 - **Configurable hotkey** — Right Option (default), Left Option, Right Command, Right Shift, Right Control, Fn/Globe, Backtick, or F5–F12
 - **Launch at login** — one toggle in Settings
+- **Menu bar icon** — top-right status icon mirrors the app's state (idle / recording / transcribing / pasted / error) with Settings and Quit always one click away
+- **Optional Dock icon** — on by default; hide it in Settings for a cleaner Dock
 - **3-minute recording cap** — an accidentally held key stops itself
 - **Paste anywhere** — text is pasted at the cursor in the focused app; without Accessibility permission it falls back to clipboard-only
-- **Background app** — no Dock icon, no menu bar clutter, just the pill
 
 ## Requirements
 
@@ -84,6 +85,7 @@ Click the pill (or right-click it → **Settings…**):
 - **Hotkey** — Right/Left Option, Right Command, Right Shift, Right Control, Fn/Globe, Backtick, or F5–F12. Persisted across launches.
 - **Model** — Large v3 Turbo (recommended), Small, or Base. Switching downloads the new model once and uses it from then on.
 - **Launch at login** — registers/unregisters the app as a login item.
+- **Show in Dock** — toggle the Dock icon on/off (the menu bar icon is always there).
 - **Permissions** — live status + request buttons for Microphone and Accessibility.
 
 Right-click the pill → **Quit Voice to Text** to exit.
@@ -99,6 +101,7 @@ This project is MIT-licensed — fork it, change it, make it yours. The codebase
 | `Sources/OpenSourceVoiceToText/AppMain.swift` | Entry point, starts `NSApplication` |
 | `Sources/OpenSourceVoiceToText/AppDelegate.swift` | Wires pill + hotkey + controller together |
 | `Sources/OpenSourceVoiceToText/PillPanel.swift` | Floating pill window (position, size, SwiftUI view) |
+| `Sources/OpenSourceVoiceToText/MenuBarController.swift` | Menu bar status item (state icon + Settings/Quit menu) |
 | `Sources/OpenSourceVoiceToText/HotkeyManager.swift` | Global push-to-talk key monitoring |
 | `Sources/OpenSourceVoiceToText/InputMonitoring.swift` | Input Monitoring permission check + request |
 | `Sources/OpenSourceVoiceToText/SettingsStore.swift` | Hotkey, model and launch-at-login choices (`UserDefaults`) |

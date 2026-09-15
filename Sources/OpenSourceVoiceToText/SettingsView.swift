@@ -43,6 +43,10 @@ struct SettingsView: View {
 
             Section("General") {
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
+                Toggle("Show in Dock", isOn: $settings.showInDock)
+                Text("The menu bar icon (top right) is always available for Settings and Quit.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Permissions") {

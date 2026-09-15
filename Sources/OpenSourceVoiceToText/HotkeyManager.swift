@@ -74,7 +74,14 @@ final class HotkeyManager {
 
     private func handleKey(_ event: NSEvent) {
         let hotkey = settings.hotkey
-        guard !hotkey.isModifier, event.keyCode == hotkey.keyCode else { return }
+        guard !hotkey.isModifier else { return }
+        if hotkey == .backtick {
+            // Match by character rather than hardware keyCode: the `~ key
+            // is keyCode 50 on ANSI keyboards but 10 on ISO layouts.
+            guard event.charactersIgnoringModifiers == "`" else { return }
+        } else {
+            guard event.keyCode == hotkey.keyCode else { return }
+        }
 
         switch event.type {
         case .keyDown:
