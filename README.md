@@ -44,6 +44,8 @@ Then:
 - **No hallucinated text** — silence and background noise are detected and discarded instead of producing phantom "Thanks for watching!" output
 - **Configurable hotkey** — Right Option (default), Left Option, Right Command, Right Shift, Right Control, Fn/Globe, Backtick, or F5–F12
 - **No stray characters** — with Accessibility granted, a consuming event tap swallows the hotkey so holding Backtick never types ````` into your text
+- **Sound cues** — a blip when recording starts, a blip when you release, and a warning sound if recording cuts off mid-sentence (audio device change, 3-minute cap, error) or nothing was captured. You'll never talk into the void again. Toggleable in Settings
+- **Survives audio device changes** — AirPods connecting or another app grabbing the mic mid-sentence no longer silently kills the recording; the engine restarts itself and keeps your audio
 - **Launch at login** — one toggle in Settings
 - **Menu bar icon** — top-right status icon mirrors the app's state (idle / recording / transcribing / pasted / error) with Settings and Quit always one click away
 - **Optional Dock icon** — on by default; hide it in Settings for a cleaner Dock
@@ -87,6 +89,7 @@ Click the pill (or right-click it → **Settings…**):
 - **Model** — Large v3 Turbo (recommended), Small, or Base. Switching downloads the new model once and uses it from then on.
 - **Launch at login** — registers/unregisters the app as a login item.
 - **Show in Dock** — toggle the Dock icon on/off (the menu bar icon is always there).
+- **Sound cues** — audio feedback for record start/stop, cut-offs and empty captures.
 - **Permissions** — live status + request buttons for Microphone and Accessibility.
 
 Right-click the pill → **Quit Voice to Text** to exit.

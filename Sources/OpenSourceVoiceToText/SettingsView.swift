@@ -44,6 +44,10 @@ struct SettingsView: View {
             Section("General") {
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
                 Toggle("Show in Dock", isOn: $settings.showInDock)
+                Toggle("Sound cues", isOn: $settings.soundCues)
+                Text("Blip when recording starts and stops, plus a warning sound if recording cuts off mid-sentence or nothing was captured.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Text("The menu bar icon (top right) is always available for Settings and Quit.")
                     .font(.caption)
                     .foregroundStyle(.secondary)

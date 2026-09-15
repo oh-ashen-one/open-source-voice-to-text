@@ -111,6 +111,7 @@ final class SettingsStore: ObservableObject {
     private let modelKey = "whisperModel"
     private let launchAtLoginKey = "launchAtLogin"
     private let showInDockKey = "showInDock"
+    static let soundCuesKey = "soundCues"
 
     @Published var hotkey: Hotkey {
         didSet { defaults.set(hotkey.rawValue, forKey: hotkeyKey) }
@@ -143,6 +144,12 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    /// Audio blips on record start/stop/interruption. Read directly from
+    /// UserDefaults by SoundCues so any code path can check it cheaply.
+    @Published var soundCues: Bool {
+        didSet { defaults.set(soundCues, forKey: Self.soundCuesKey) }
+    }
+
     static func applyDockPolicy(_ show: Bool) {
         NSApp.setActivationPolicy(show ? .regular : .accessory)
     }
@@ -167,5 +174,8 @@ final class SettingsStore: ObservableObject {
         } else {
             showInDock = defaults.bool(forKey: showInDockKey)
         }
+        soundCues = defaults.object(forKey: Self.soundCuesKey) == nil
+            ? true
+            : defaults.bool(forKey: Self.soundCuesKey)
     }
 }

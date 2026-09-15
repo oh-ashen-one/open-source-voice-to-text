@@ -43,6 +43,17 @@ final class AppController: ObservableObject {
 
     init(settings: SettingsStore) {
         self.settings = settings
+        // The recorder can die mid-capture if the input device disappears
+        // and the engine cannot be restarted — surface it loudly.
+        recorder.onFailure = { [weak self] in
+            Task { @MainActor in
+                guard let self, self.state == .recording else { return }
+                self.limitTask?.cancel()
+                self.recordingStart = nil
+                self.state = .error("Microphone stopped — check your input device")
+                SoundCues.interrupted()
+            }
+        }
         // Switching models in settings unloads the current one and downloads
         // the new selection.
         modelCancellable = settings.$model
@@ -91,10 +102,18 @@ final class AppController: ObservableObject {
         Log.info("beginRecording: modelReady=\(modelReady) state=\(state)")
         guard modelReady else {
             if case .error = state { prepare() }
+            SoundCues.error() // pressed while the model is still loading
             return
         }
         // Allow retrying from a (sticky) error state.
-        guard state == .idle || state.isError else { return }
+        guard state == .idle || state.isError else {
+            if state != .recording {
+                // Pressed while busy transcribing/pasting — let the user
+                // know this press did NOT start a new recording.
+                SoundCues.error()
+            }
+            return
+        }
         recordingTask?.cancel()
         recordingTask = Task {
             let granted = await Self.requestMicrophoneAccess()
@@ -106,6 +125,7 @@ final class AppController: ObservableObject {
             }
             guard granted else {
                 state = .error("Microphone access denied — enable in System Settings > Privacy & Security")
+                SoundCues.error()
                 return
             }
             do {
@@ -113,10 +133,12 @@ final class AppController: ObservableObject {
                 recordingStart = Date()
                 state = .recording
                 scheduleRecordingLimit()
+                SoundCues.start()
                 Log.info("beginRecording: recording started")
             } catch {
                 Log.info("beginRecording: recorder failed: \(error.localizedDescription)")
                 state = .error(error.localizedDescription)
+                SoundCues.error()
             }
         }
     }
@@ -132,6 +154,7 @@ final class AppController: ObservableObject {
         limitTask?.cancel()
         let samples = recorder.stop()
         recordingStart = nil
+        SoundCues.stop()
         Log.info("endRecording: captured \(samples.count) samples")
         guard !samples.isEmpty else {
             state = .idle
@@ -144,6 +167,9 @@ final class AppController: ObservableObject {
                 let text = try await transcriber.transcribe(samples: samples, model: model)
                 Log.info("endRecording: transcription: \"\(text)\"")
                 if text.isEmpty {
+                    // They talked (or thought they did) but nothing usable
+                    // was captured — say so out loud.
+                    SoundCues.nothingCaptured()
                     state = .idle
                     return
                 }
@@ -153,6 +179,7 @@ final class AppController: ObservableObject {
             } catch {
                 Log.info("endRecording: transcription failed: \(error.localizedDescription)")
                 state = .error(error.localizedDescription)
+                SoundCues.error()
             }
         }
     }
@@ -165,6 +192,8 @@ final class AppController: ObservableObject {
         limitTask = Task {
             try? await Task.sleep(nanoseconds: UInt64(Self.recordingLimit * 1_000_000_000))
             guard !Task.isCancelled else { return }
+            Log.info("recording limit reached — auto-stopping")
+            SoundCues.interrupted() // stopped without the key being released
             endRecording()
         }
     }
