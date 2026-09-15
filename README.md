@@ -43,6 +43,7 @@ Then:
 - **Clipboard-safe** — pastes your dictation, then restores whatever you had copied before
 - **No hallucinated text** — silence and background noise are detected and discarded instead of producing phantom "Thanks for watching!" output
 - **Configurable hotkey** — Right Option (default), Left Option, Right Command, Right Shift, Right Control, Fn/Globe, Backtick, or F5–F12
+- **No stray characters** — with Accessibility granted, a consuming event tap swallows the hotkey so holding Backtick never types ````` into your text
 - **Launch at login** — one toggle in Settings
 - **Menu bar icon** — top-right status icon mirrors the app's state (idle / recording / transcribing / pasted / error) with Settings and Quit always one click away
 - **Optional Dock icon** — on by default; hide it in Settings for a cleaner Dock
@@ -61,8 +62,8 @@ Then:
 On first use macOS will ask for:
 
 - **Input Monitoring** — required for the app to see your hotkey presses while other apps are focused. On recent macOS versions, without this the hotkey silently does nothing. The app asks at first launch; if nothing seems to happen when you hold the key, check **System Settings → Privacy & Security → Input Monitoring**, toggle **Open Source Voice to Text** on, then quit and relaunch the app (grants only take effect on the next launch).
-- **Microphone** — required to record your voice.
-- **Accessibility** — required for auto-paste (synthesizing ⌘V into other apps). It is asked for **once**. If you decline, the app still works: transcribed text is copied to the clipboard and the pill shows an orange clipboard icon — paste manually with ⌘V.
+- **Microphone** — required to record your voice. Asked at first launch.
+- **Accessibility** — does two jobs: auto-paste (synthesizing ⌘V into other apps) and **swallowing the hotkey** so its character isn't typed into the focused app while you hold it (only relevant for character-key hotkeys like Backtick). It is asked for **once**. If you decline, the app still works: transcribed text is copied to the clipboard and the pill shows an orange clipboard icon — paste manually with ⌘V — and a character-key hotkey will leave its character in the text (modifier hotkeys like Right Option are unaffected).
 
 Manage these any time under **System Settings → Privacy & Security → Input Monitoring / Microphone / Accessibility**, or from the pill's settings window (click the pill).
 
@@ -116,7 +117,8 @@ This project is MIT-licensed — fork it, change it, make it yours. The codebase
 
 ## How it works
 
-- **Hotkey**: global `NSEvent` monitors — `.flagsChanged` for modifier keys, `.keyDown`/`.keyUp` for F-keys (no Accessibility permission needed for monitoring)
+- **Hotkey**: modifier keys via passive `NSEvent` `.flagsChanged` monitors; character/F-keys via a consuming `CGEventTap` (needs Accessibility, falls back to passive monitors without it)
+- **Background-proof**: App Nap and sudden/automatic termination are disabled so the global hotkey never starves
 - **Audio**: `AVAudioEngine` tap, resampled on the fly to 16 kHz mono `Float32`
 - **Transcription**: WhisperKit, greedy decoding without timestamps for lowest latency; RMS-based silence gate + hallucination blocklist on quiet input
 - **Insertion**: snapshot clipboard → set text → `CGEvent` ⌘V synthesis → restore clipboard (skipped if the clipboard changed in the meantime)

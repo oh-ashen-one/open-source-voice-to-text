@@ -92,7 +92,7 @@ enum TextInserter {
 
     /// Shows the system Accessibility prompt at most once per install;
     /// afterwards the user is directed to System Settings manually.
-    private static func promptForAccessibilityOnce() {
+    static func promptForAccessibilityOnce() {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: didPromptKey) else { return }
         defaults.set(true, forKey: didPromptKey)

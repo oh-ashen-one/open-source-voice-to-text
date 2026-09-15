@@ -24,6 +24,8 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppSleepDisabled</key>
+	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Voice to Text needs microphone access to record your speech and transcribe it locally on your Mac. Audio never leaves your device.</string>
 	<key>NSPrincipalClass</key>

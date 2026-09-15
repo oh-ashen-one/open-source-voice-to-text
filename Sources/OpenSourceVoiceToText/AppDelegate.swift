@@ -8,11 +8,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pillPanel: PillPanel?
     private var settingsWindow: NSWindow?
     private var menuBar: MenuBarController?
+    private var activityToken: NSObjectProtocol?
     private let settings = SettingsStore()
     private lazy var controller = AppController(settings: settings)
     private lazy var hotkeyManager = HotkeyManager(settings: settings)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // A push-to-talk daemon must never be App-Napped: napping starves
+        // the run loop, global hotkey events arrive seconds late or are
+        // dropped entirely, and the app looks dead to the user.
+        ProcessInfo.processInfo.disableAutomaticTermination("Global hotkey monitoring")
+        ProcessInfo.processInfo.disableSuddenTermination()
+        activityToken = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiated, .latencyCritical, .idleSystemSleepDisabled],
+            reason: "Global push-to-talk hotkey monitoring"
+        )
+
         // Dock visibility per user preference (Info.plist starts us accessory).
         SettingsStore.applyDockPolicy(settings.showInDock)
 
@@ -41,6 +52,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // no events at all — prompt for it up front (once).
         if !InputMonitoring.isGranted {
             InputMonitoring.request()
+        }
+
+        // Accessibility powers both auto-paste and the consuming hotkey tap
+        // (which keeps the hotkey character out of the focused app).
+        if !AXIsProcessTrusted() {
+            TextInserter.promptForAccessibilityOnce()
         }
 
         // Kick off microphone permission + model download in the background.

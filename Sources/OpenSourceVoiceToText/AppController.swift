@@ -64,12 +64,21 @@ final class AppController: ObservableObject {
         guard !modelReady else { return }
         state = .downloadingModel
         let model = settings.model.rawValue
+        // Ask for the microphone up front so the system prompt never
+        // appears in the middle of a hold-to-talk press (which would
+        // swallow the key release and desync the state machine).
+        Task {
+            let granted = await Self.requestMicrophoneAccess()
+            Log.info("prepare: microphone access \(granted ? "granted" : "denied")")
+        }
         Task {
             do {
                 try await transcriber.prepare(model: model)
                 modelReady = true
                 state = .idle
+                Log.info("prepare: model ready")
             } catch {
+                Log.info("prepare: model failed: \(error.localizedDescription)")
                 state = .error("Model download failed — click to retry")
             }
         }
@@ -79,6 +88,7 @@ final class AppController: ObservableObject {
 
     /// Hotkey pressed: start recording (if the model is ready).
     func beginRecording() {
+        Log.info("beginRecording: modelReady=\(modelReady) state=\(state)")
         guard modelReady else {
             if case .error = state { prepare() }
             return
@@ -88,6 +98,12 @@ final class AppController: ObservableObject {
         recordingTask?.cancel()
         recordingTask = Task {
             let granted = await Self.requestMicrophoneAccess()
+            // The key may have been released (or a newer press started)
+            // while the system permission prompt was on screen.
+            guard !Task.isCancelled else {
+                Log.info("beginRecording: cancelled while awaiting mic permission")
+                return
+            }
             guard granted else {
                 state = .error("Microphone access denied — enable in System Settings > Privacy & Security")
                 return
@@ -97,7 +113,9 @@ final class AppController: ObservableObject {
                 recordingStart = Date()
                 state = .recording
                 scheduleRecordingLimit()
+                Log.info("beginRecording: recording started")
             } catch {
+                Log.info("beginRecording: recorder failed: \(error.localizedDescription)")
                 state = .error(error.localizedDescription)
             }
         }
@@ -105,10 +123,16 @@ final class AppController: ObservableObject {
 
     /// Hotkey released: stop recording, transcribe, insert text.
     func endRecording() {
+        Log.info("endRecording: state=\(state)")
+        // Cancel a start that is still waiting on the permission prompt;
+        // otherwise recording would begin with the key already up.
+        recordingTask?.cancel()
+        recordingTask = nil
         guard state == .recording else { return }
         limitTask?.cancel()
         let samples = recorder.stop()
         recordingStart = nil
+        Log.info("endRecording: captured \(samples.count) samples")
         guard !samples.isEmpty else {
             state = .idle
             return
@@ -118,6 +142,7 @@ final class AppController: ObservableObject {
         Task {
             do {
                 let text = try await transcriber.transcribe(samples: samples, model: model)
+                Log.info("endRecording: transcription: \"\(text)\"")
                 if text.isEmpty {
                     state = .idle
                     return
@@ -126,6 +151,7 @@ final class AppController: ObservableObject {
                 state = didPaste ? .pasted : .copiedOnly
                 scheduleReset()
             } catch {
+                Log.info("endRecording: transcription failed: \(error.localizedDescription)")
                 state = .error(error.localizedDescription)
             }
         }
