@@ -46,6 +46,7 @@ Then:
 - **No stray characters** — with Accessibility granted, a consuming event tap swallows the hotkey so holding Backtick never types ````` into your text
 - **Sound cues** — a blip when recording starts, a blip when you release, and a warning sound if recording cuts off mid-sentence (audio device change, 3-minute cap, error) or nothing was captured. You'll never talk into the void again. Toggleable in Settings
 - **Survives audio device changes** — AirPods connecting or another app grabbing the mic mid-sentence no longer silently kills the recording; the engine restarts itself and keeps your audio
+- **Every recording is saved** — finished recordings land in `~/Downloads` as timestamped 16 kHz WAV files, so a dictation is never lost (macOS asks for Downloads-folder access once)
 - **Launch at login** — one toggle in Settings
 - **Menu bar icon** — top-right status icon mirrors the app's state (idle / recording / transcribing / pasted / error) with Settings and Quit always one click away
 - **Optional Dock icon** — on by default; hide it in Settings for a cleaner Dock

@@ -160,6 +160,7 @@ final class AppController: ObservableObject {
             state = .idle
             return
         }
+        RecordingSaver.save(samples: samples)
         state = .transcribing
         let model = settings.model.rawValue
         Task {
